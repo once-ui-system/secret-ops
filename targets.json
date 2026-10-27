@@ -13,6 +13,30 @@
       "destinations": [{ "project": "aveiro", "key": "CRON_SECRET" }],
       "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
     },
+    "aveiro/unsubscribe": {
+      "source": { "type": "generated" },
+      "destinations": [{ "project": "aveiro", "key": "UNSUBSCRIBE_SECRET" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
+      "notes": "New variable. Run it right before aveiro#434 merges: the current code verifies with UNSUBSCRIBE_SECRET alone, so links signed with the old default fail until #434 (which also accepts the default until 2027-01-31) is deployed. Future rotations need UNSUBSCRIBE_SECRET_PREVIOUS set to the old value."
+    },
+    "aveiro/auth-bridge": {
+      "source": { "type": "generated" },
+      "destinations": [{ "project": "aveiro", "key": "AUTH_BRIDGE_SECRET" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
+      "notes": "New variable; until now derived from the service key. Setting or rotating it signs visitors out once (they sign in again)."
+    },
+    "aveiro/connect-oauth-state": {
+      "source": { "type": "generated" },
+      "destinations": [{ "project": "aveiro", "key": "CONNECT_OAUTH_STATE_SECRET" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
+      "notes": "New variable; until now derived from the service key. Only Stripe Connect sign-ins in progress at that moment fail and must restart."
+    },
+    "aveiro/newsletter-unlock": {
+      "source": { "type": "generated" },
+      "destinations": [{ "project": "aveiro", "key": "NEWSLETTER_UNLOCK_SECRET" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
+      "hold": "unlock links already in inboxes are signed with a key derived from the service key; setting this breaks them unless the code also accepts the old derivation for a while (Lorant to decide)"
+    },
     "aveiro/stripe-secret": {
       "source": { "type": "manual", "prefix": "sk_live_", "dashboard": "Stripe > Developers > API keys > Roll key (keep the old key valid 1 hour)" },
       "destinations": [{ "project": "aveiro", "key": "STRIPE_SECRET_KEY" }],
