@@ -1,0 +1,35 @@
+name: Revoke old key
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target id from targets.json (Supabase targets only)"
+        required: true
+      key_ids:
+        description: "Comma-separated old key ids, as printed by the rotate run"
+        required: true
+      dry_run:
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  revoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: rotation
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Revoke
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          TARGET: ${{ inputs.target }}
+          KEY_IDS: ${{ inputs.key_ids }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: node scripts/revoke.mjs "$TARGET" "$KEY_IDS" $([ "$DRY_RUN" = "true" ] && echo --dry-run)
