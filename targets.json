@@ -1,0 +1,92 @@
+{
+  "$comment": "Every rotatable secret. Ids and variable names only, never values. source.type: supabase (new sb_secret_ key by API), generated (random), manual (rolled in a dashboard, pasted into the INCOMING_SECRET repo secret). A destination with shared: true is a team shared variable and needs projectId.",
+  "targets": {
+    "aveiro/supabase-secret": {
+      "source": { "type": "supabase", "ref": "mritcuhqiyieibsbspwt" },
+      "destinations": [{ "project": "aveiro", "key": "SUPABASE_SERVICE_ROLE_KEY" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
+      "notes": "Replaces the legacy service_role JWT with a new sb_secret_ key. supabase-js accepts it as-is; code that sends the key as a Bearer JWT (edge functions, raw PostgREST) does not. Check before the first run."
+    },
+    "aveiro/cron": {
+      "source": { "type": "generated" },
+      "destinations": [{ "project": "aveiro", "key": "CRON_SECRET" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
+    },
+    "aveiro/stripe-secret": {
+      "source": { "type": "manual", "prefix": "sk_live_", "dashboard": "Stripe > Developers > API keys > Roll key (keep the old key valid 1 hour)" },
+      "destinations": [{ "project": "aveiro", "key": "STRIPE_SECRET_KEY" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
+    },
+    "aveiro/stripe-webhook": {
+      "source": { "type": "manual", "prefix": "whsec_", "dashboard": "Stripe > Developers > Webhooks > endpoint > Roll secret (keep the old secret valid 24 hours)" },
+      "destinations": [{ "project": "aveiro", "key": "STRIPE_WEBHOOK_SECRET" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
+    },
+    "aveiro/resend": {
+      "source": { "type": "manual", "prefix": "re_", "dashboard": "Resend > API Keys > create, then delete the old key" },
+      "destinations": [{ "project": "aveiro", "key": "RESEND_API_KEY" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
+    },
+    "aveiro/upstash": {
+      "source": { "type": "manual", "dashboard": "Upstash > database > Reset password (also changes MCP_REDIS_URL if it points at the same database)" },
+      "destinations": [{ "project": "aveiro", "key": "UPSTASH_REDIS_REST_TOKEN" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
+    },
+    "aveiro/ai-gateway": {
+      "source": { "type": "manual", "dashboard": "Vercel > AI Gateway > API keys" },
+      "destinations": [{ "project": "aveiro", "key": "AI_GATEWAY_API_KEY" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
+    },
+    "aveiro/byteplus": {
+      "source": { "type": "manual", "dashboard": "BytePlus console > API keys" },
+      "destinations": [{ "project": "aveiro", "key": "BYTEPLUS_API_KEY" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
+    },
+    "aveiro/bunny-storage": {
+      "source": { "type": "manual", "dashboard": "Bunny > Storage zone > FTP & API access > Reset password" },
+      "destinations": [{ "project": "aveiro", "key": "BUNNY_STORAGE_ACCESS_KEY" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
+    },
+    "aveiro/chirio-key": {
+      "source": { "type": "manual", "dashboard": "Chirio dashboard > API keys (key Aveiro uses to post)" },
+      "destinations": [{ "project": "aveiro", "key": "CHIRIO_API_KEY" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
+    },
+    "aveiro/frametic-service": {
+      "source": { "type": "manual", "dashboard": "Frametic admin > service keys" },
+      "destinations": [
+        { "project": "aveiro", "key": "FRAMETIC_SERVICE_KEY" },
+        { "project": "chirio", "key": "FRAMETIC_SERVICE_KEY" }
+      ],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
+      "notes": "Same Frametic key name in aveiro and chirio. If they are two different keys, split this target."
+    },
+    "aveiro/frametic-embed": {
+      "source": { "type": "manual", "dashboard": "Frametic admin > embed usage key" },
+      "destinations": [{ "project": "aveiro", "key": "FRAMETIC_EMBED_USAGE_KEY" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
+    },
+    "aveiro/frametic-webhook": {
+      "source": { "type": "generated" },
+      "destinations": [{ "project": "aveiro", "key": "FRAMETIC_WEBHOOK_SECRET" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
+      "hold": "the sending side (Frametic) must get the same value; find where Frametic stores it first"
+    },
+    "aveiro/media-url-signing": {
+      "source": { "type": "generated" },
+      "destinations": [{ "project": "aveiro", "key": "MEDIA_URL_SIGNING_SECRET" }],
+      "hold": "breaks signed media links already sent (security audit, 2026-10-24)"
+    },
+    "aveiro/email-provider-enc": {
+      "source": { "type": "generated" },
+      "destinations": [{ "project": "aveiro", "key": "EMAIL_PROVIDER_ENC_KEY" }],
+      "hold": "stored data is encrypted with it; needs a re-encrypt script first"
+    },
+    "chirio/cron": {
+      "source": { "type": "generated" },
+      "destinations": [{ "project": "chirio", "key": "CRON_SECRET" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
+      "hold": "after chirio#70 merges and sql/chirio-rls-lockdown.sql has run"
+    }
+  }
+}
