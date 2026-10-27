@@ -80,7 +80,10 @@ export function vercelClient({ token, teamId, fetchImpl }) {
     return (data.data || []).map((e) => ({ key: e.key, targets: e.target || [], type: e.type, projectIds: e.projectId || [] }));
   }
 
-  /** Redeploy the newest READY deployment for a target and wait for it. */
+  /**
+   * Redeploy the newest READY deployment for a target and wait for it.
+   * Returns null when a project has no READY preview deployment.
+   */
   async function redeploy(project, { target, branch, timeoutMs = 15 * 60_000, pollMs = 10_000 }) {
     const q = new URLSearchParams({ projectId: project, state: "READY", limit: "20" });
     if (target === "production") q.set("target", "production");
@@ -89,7 +92,10 @@ export function vercelClient({ token, teamId, fetchImpl }) {
       target === "production" ? d.target === "production" : d.target !== "production" && (!branch || d.meta?.githubCommitRef === branch),
     );
     const base = candidates[0];
-    if (!base) throw new Error(`no READY ${target} deployment found for ${project}${branch ? ` on ${branch}` : ""}`);
+    // Projects that only build main (ignored build step) have no preview to
+    // redeploy; the caller skips the preview check for them.
+    if (!base && target !== "production") return null;
+    if (!base) throw new Error(`no READY production deployment found for ${project}`);
     const body = { name: project, deploymentId: base.uid, ...(target === "production" ? { target: "production" } : {}) };
     const dep = await call(`/v13/deployments?forceNew=1`, { method: "POST", body });
     const started = Date.now();
