@@ -90,3 +90,14 @@ test("dry run shows the production step against the simulated preview state", as
   assert.ok(lines.some((l) => l.includes("delete old entry old (production)")), lines.join("\n"));
   assert.deepEqual((await real.list("K")).map((e) => e.targets), [["preview", "production"]]);
 });
+
+test("redeploy returns null when a project has no READY preview deployment", async () => {
+  const { vercelClient } = await import("../scripts/lib/vercel.mjs");
+  const fetchImpl = async () =>
+    new Response(JSON.stringify({ deployments: [{ uid: "p1", target: "production", meta: {} }] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  const v = vercelClient({ token: "t", teamId: "team", fetchImpl });
+  assert.equal(await v.redeploy("aveiro", { target: "preview" }), null);
+});

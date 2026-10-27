@@ -7,7 +7,7 @@ Rotates the secrets our Vercel projects use without anyone copying values by han
 | Workflow | What it changes | Approval |
 |---|---|---|
 | **Inventory** (`discover.yml`) | Nothing. It lists the Supabase projects and their key names, every Vercel project variable, and the team shared variables, and flags secrets that are readable or that reach Development. | yes |
-| **Rotate secret** (`rotate.yml`) | Gets a new value, puts it on Preview, redeploys and smoke-tests Preview, and only then moves Production and redeploys it. Defaults to a dry run. | yes |
+| **Rotate secret** (`rotate.yml`) | Gets a new value, puts it on Preview, redeploys and smoke-tests Preview, and only then moves Production and redeploys it. Projects that build only `main` (no preview deployments) skip the preview check. Defaults to a dry run. | yes |
 | **Revoke old key** (`revoke.yml`) | Deletes old Supabase secret keys by id. It refuses to delete the newest one. It always runs separately, after a rotation has been checked. | yes |
 | **Test** (`test.yml`) | Unit tests and the `targets.json` check, on every push. | no |
 

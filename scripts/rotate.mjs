@@ -86,6 +86,10 @@ async function main() {
       continue;
     }
     const dep = await vercel.redeploy(p, { target: "preview", branch: target.previewBranch });
+    if (!dep) {
+      log(`${p} has no preview deployments (builds main only): preview check skipped, production redeploy is the test`);
+      continue;
+    }
     log(`${p} preview redeployed: ${dep.url}`);
     await smoke(dep.url, target.smoke, { project: p, log });
   }
