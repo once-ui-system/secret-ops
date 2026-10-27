@@ -59,10 +59,15 @@ function need(name) {
 async function main() {
   const target = getTarget(loadTargets(), id);
   const vercel = vercelClient({ token: need("VERCEL_TOKEN"), teamId: need("VERCEL_TEAM_ID") });
-  const store = (d) => {
-    const s = d.shared ? vercel.sharedStore(d.projectId) : vercel.projectStore(d.project);
-    return dryRun ? dryRunStore(s) : s;
-  };
+  // One store per destination for the whole run, so a dry run's simulated
+  // preview step is visible to its production step.
+  const stores = new Map(
+    target.destinations.map((d) => {
+      const s = d.shared ? vercel.sharedStore(d.projectId) : vercel.projectStore(d.project);
+      return [d, dryRun ? dryRunStore(s) : s];
+    }),
+  );
+  const store = (d) => stores.get(d);
   const projects = [...new Set(target.destinations.map((d) => d.project))];
 
   log(`target ${id}${dryRun ? " (dry run)" : ""}: ${target.destinations.map((d) => `${d.project}:${d.key}`).join(", ")}`);

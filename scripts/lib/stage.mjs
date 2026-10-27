@@ -39,15 +39,36 @@ export async function promoteProduction(store, { key, newId, log = console.log }
   await store.updateTargets(newId, ["preview", "production"]);
 }
 
-/** A store that records what would happen and changes nothing. */
+/**
+ * A store that changes nothing but keeps its own copy of the entries, so a
+ * dry run's later steps see the earlier steps' (simulated) changes.
+ */
 export function dryRunStore(store) {
   let n = 0;
+  const copies = new Map();
+  const entries = async (key) => {
+    if (!copies.has(key)) copies.set(key, (await store.list(key)).map((e) => ({ ...e, targets: [...e.targets] })));
+    return copies.get(key);
+  };
+  const find = (id) => [...copies.values()].flat().find((e) => e.id === id);
   return {
     label: `${store.label} (dry run)`,
-    list: (key) => store.list(key),
-    create: async () => `dry-${++n}`,
-    updateTargets: async () => {},
+    list: async (key) => (await entries(key)).map((e) => ({ ...e, targets: [...e.targets] })),
+    create: async ({ key, targets }) => {
+      const id = `dry-${++n}`;
+      (await entries(key)).push({ id, targets: [...targets], type: "sensitive" });
+      return id;
+    },
+    updateTargets: async (id, targets) => {
+      const e = find(id);
+      if (e) e.targets = [...targets];
+    },
     updateValue: async () => {},
-    remove: async () => {},
+    remove: async (id) => {
+      for (const list of copies.values()) {
+        const i = list.findIndex((e) => e.id === id);
+        if (i >= 0) list.splice(i, 1);
+      }
+    },
   };
 }
