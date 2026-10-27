@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { stagePreview, promoteProduction } from "../scripts/lib/stage.mjs";
+import { stagePreview, promoteProduction, dryRunStore } from "../scripts/lib/stage.mjs";
 import { pickRevocable } from "../scripts/revoke.mjs";
 import { manualSecret } from "../scripts/lib/targets.mjs";
 import { flag } from "../scripts/discover.mjs";
@@ -78,4 +78,15 @@ test("inventory flags readable and development secrets", () => {
   assert.equal(flag({ key: "SUPABASE_SERVICE_ROLE_KEY", type: "encrypted", targets: ["development", "production"] }), "not sensitive, in development");
   assert.equal(flag({ key: "STRIPE_SECRET_KEY", type: "sensitive", targets: ["production"] }), "");
   assert.equal(flag({ key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", type: "encrypted", targets: ["development"] }), "");
+});
+
+test("dry run shows the production step against the simulated preview state", async () => {
+  const real = memoryStore([{ id: "old", key: "K", targets: ["preview", "production"] }]);
+  const dry = dryRunStore(real);
+  const lines = [];
+  const log = (l) => lines.push(l);
+  const id = await stagePreview(dry, { key: "K", value: "v", log });
+  await promoteProduction(dry, { key: "K", newId: id, log });
+  assert.ok(lines.some((l) => l.includes("delete old entry old (production)")), lines.join("\n"));
+  assert.deepEqual((await real.list("K")).map((e) => e.targets), [["preview", "production"]]);
 });
