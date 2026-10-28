@@ -1,6 +1,12 @@
 {
   "$comment": "Every rotatable secret. Ids and variable names only, never values. source.type: supabase (new sb_secret_ key by API), generated (random), manual (rolled in a dashboard, pasted into the INCOMING_SECRET repo secret). A destination with shared: true is a team shared variable and needs projectId.",
   "targets": {
+    "magic-portfolio/page-access": {
+      "source": { "type": "generated" },
+      "destinations": [{ "project": "magic-portfolio-demo", "key": "PAGE_ACCESS_SECRET" }],
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
+      "notes": "New variable for magic-portfolio#206 (signed access cookie). Without it the cookie key is derived from PAGE_ACCESS_PASSWORD, so this is not urgent; setting it asks visitors with an old cookie for the password once."
+    },
     "aveiro/supabase-secret": {
       "source": { "type": "supabase", "ref": "mritcuhqiyieibsbspwt" },
       "destinations": [{ "project": "aveiro", "key": "SUPABASE_SERVICE_ROLE_KEY" }],
