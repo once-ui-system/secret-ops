@@ -1,0 +1,26 @@
+{
+  "chirio": {
+    "ref": "qobsywuqmxnqskuksfzt",
+    "repo": "once-ui-system/chirio",
+    "dir": "supabase/migrations",
+    "ordered": true
+  },
+  "orbit": {
+    "ref": "ccatqdjhwclwrlrryviv",
+    "repo": "once-ui-system/supa-social",
+    "dir": "migrations",
+    "ordered": true
+  },
+  "frametic": {
+    "ref": "lffdejkeztbwlgsfpgbo",
+    "repo": "once-ui-system/frametic",
+    "dir": "supabase/migrations",
+    "ordered": true
+  },
+  "aveiro": {
+    "ref": "mritcuhqiyieibsbspwt",
+    "repo": "once-ui-system/aveiro",
+    "dir": "supabase/migrations",
+    "ordered": false
+  }
+}

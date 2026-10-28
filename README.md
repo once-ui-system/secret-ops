@@ -9,6 +9,7 @@ Rotates the secrets our Vercel projects use without anyone copying values by han
 | **Inventory** (`discover.yml`) | Nothing. It lists the Supabase projects and their key names, every Vercel project variable, and the team shared variables, and flags secrets that are readable or that reach Development. | yes |
 | **Rotate secret** (`rotate.yml`) | Gets a new value, puts it on Preview, redeploys and smoke-tests Preview, and only then moves Production and redeploys it. Projects that build only `main` (no preview deployments) skip the preview check. Defaults to a dry run. | yes |
 | **Revoke old key** (`revoke.yml`) | Deletes old Supabase secret keys by id. It refuses to delete the newest one. It always runs separately, after a rotation has been checked. | yes |
+| **Migrate database** (`migrate.yml`) | Runs a repo's migration files against one Supabase project (`databases.json`). Without a plan id it only rehearses: the files run in a transaction that is rolled back. With the plan id the rehearsal printed, it rehearses again and applies the same files in one transaction, recorded in the project's `secret_ops.migrations` table. | yes |
 | **Test** (`test.yml`) | Unit tests and the `targets.json` check, on every push. | no |
 
 Where each target's new value comes from (`targets.json`):
@@ -49,6 +50,20 @@ Targets marked `hold` refuse to run. Each one says why, for example "stored data
 3. Run it again with dry run unticked, and approve.
 4. For a **manual** target, first roll the key in the dashboard named in `targets.json` and paste the new value into `INCOMING_SECRET`. Once the run is green, expire the old key in that dashboard, then overwrite `INCOMING_SECRET` with any placeholder.
 5. For a **supabase** target, the summary lists the old key ids. Once the apps look healthy, run **Revoke old key** with those ids.
+
+## Running a migration
+
+1. Actions > **Migrate database** > Run workflow. Enter the database (for example `chirio`) and the files (`0019_inbox.sql,0021_boards.sql`, or `pending` once the ledger knows what already ran). Leave **plan** empty.
+2. Approve. The run first checks that a rolled-back transaction really leaves nothing behind, then rehearses every file against the real database and rolls it back. The summary lists the files, their hashes and a plan id, or the Postgres error and the file that caused it.
+3. Run it again with that plan id, and approve. It refuses if any file changed since the rehearsal, rehearses once more, then applies all files and their ledger rows in one transaction: all of them land, or none do.
+
+Files that were already run by hand in the SQL editor: run with **baseline** ticked (no plan) to see the plan id, then again with it. That records them in the ledger without running them, so `pending` works from then on.
+
+What it refuses: a file already recorded with a different hash (add a new migration instead), transaction control in the middle of a file (a whole-file `BEGIN; ... COMMIT;` wrapper is fine and removed), and statements that can't run in a transaction (`CONCURRENTLY`, `VACUUM`). Those go through the SQL editor by hand.
+
+Logs and summaries show file names, hashes and Postgres error messages, never the SQL, since the source repos are private and this one is public. There is no backup step: the Management API has no dump. The rehearsal is the safety net, plus Supabase's own daily backups on paid projects.
+
+Setup: the `rotation` environment needs one more secret, `SOURCE_REPOS_TOKEN`: a fine-grained GitHub token with read-only **Contents** access to the repos in `databases.json`. The existing `SUPABASE_ACCESS_TOKEN` runs the SQL.
 
 ## Adding a target
 

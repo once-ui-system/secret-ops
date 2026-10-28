@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/** CI check: targets.json is well formed and holds no values. */
+/** CI check: targets.json and databases.json are well formed and hold no values. */
+import { readFileSync } from "node:fs";
 import { loadTargets } from "./lib/targets.mjs";
 
 const SOURCES = new Set(["supabase", "generated", "manual"]);
@@ -17,6 +18,12 @@ for (const [id, t] of Object.entries(targets)) {
   }
 }
 if (VALUE_LIKE.test(JSON.stringify(targets))) errors.push("targets.json looks like it contains a secret value");
+const databases = JSON.parse(readFileSync(new URL("../databases.json", import.meta.url), "utf8"));
+for (const [id, d] of Object.entries(databases)) {
+  if (!/^[a-z0-9-]+$/.test(id)) errors.push(`databases.json ${id}: id must be lowercase`);
+  if (!/^[a-z]{20}$/.test(d.ref || "")) errors.push(`databases.json ${id}: bad Supabase ref`);
+  if (!/^[\w.-]+\/[\w.-]+$/.test(d.repo || "") || !d.dir || typeof d.ordered !== "boolean") errors.push(`databases.json ${id}: needs repo, dir and ordered`);
+}
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exit(1);
