@@ -24,6 +24,8 @@ export function supabaseClient({ token, fetchImpl }) {
       if (!key?.api_key) throw new Error(`Supabase returned no key value for ${ref}`);
       return { id: key.id, name: key.name, value: key.api_key };
     },
+    /** Runs SQL as the database owner (postgres). */
+    query: (ref, sql) => call(`/v1/projects/${ref}/database/query`, { method: "POST", body: { query: sql } }),
     deleteKey: (ref, id) => call(`/v1/projects/${ref}/api-keys/${id}?reason=${encodeURIComponent("rotated by secret-ops")}`, { method: "DELETE" }),
   };
 }

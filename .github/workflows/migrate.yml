@@ -1,0 +1,72 @@
+name: Migrate database
+
+# Applies a repo's migration files to one Supabase project (databases.json).
+# Every run waits for approval in the `rotation` environment. Without a plan
+# id it only rehearses: the files run in a transaction that is rolled back.
+
+on:
+  workflow_dispatch:
+    inputs:
+      database:
+        description: "Database id from databases.json (for example chirio)"
+        required: true
+      files:
+        description: "Comma-separated file names in the repo's migration folder, or 'pending'"
+        required: true
+      ref:
+        description: "Branch or commit of the source repo"
+        default: main
+      plan:
+        description: "Plan id from a rehearsal of the same files. Empty = rehearse only"
+        default: ""
+      baseline:
+        description: "Record the files as already applied by hand, without running them"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migrate-${{ inputs.database }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: rotation
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Source repo
+        id: src
+        env:
+          DATABASE: ${{ inputs.database }}
+        run: echo "repo=$(node -e 'const d=require("./databases.json")[process.env.DATABASE]; if(!d) process.exit(1); console.log(d.repo)')" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.src.outputs.repo }}
+          ref: ${{ inputs.ref }}
+          token: ${{ secrets.SOURCE_REPOS_TOKEN }}
+          path: source
+          persist-credentials: false
+          sparse-checkout: |
+            supabase
+            migrations
+      - name: Migrate
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DATABASE: ${{ inputs.database }}
+          FILES: ${{ inputs.files }}
+          PLAN: ${{ inputs.plan }}
+          BASELINE: ${{ inputs.baseline }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          export SOURCE_COMMIT="$(git -C source rev-parse HEAD)"
+          set -- "$DATABASE" "$FILES" --source source
+          [ -n "$PLAN" ] && set -- "$@" --apply "$PLAN"
+          [ "$BASELINE" = "true" ] && set -- "$@" --baseline
+          node scripts/migrate.mjs "$@"
