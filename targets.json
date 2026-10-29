@@ -119,7 +119,7 @@
       "source": { "type": "generated" },
       "destinations": [{ "project": "chirio", "key": "CRON_SECRET" }],
       "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "hold": "after chirio#70 merges and sql/chirio-rls-lockdown.sql has run"
+      "notes": "Replaces the existing CRON_SECRET with a fresh sensitive value before chirio#70 ships: from then on an unset or blank value makes the crons answer 503. Vercel cron calls pick the new value up on the next deploy."
     }
   }
 }
