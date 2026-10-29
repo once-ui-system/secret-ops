@@ -22,5 +22,11 @@
     "repo": "once-ui-system/aveiro",
     "dir": "supabase/migrations",
     "ordered": false
+  },
+  "tavilio": {
+    "ref": "azyaduzxywthryiovmlm",
+    "repo": "once-ui-system/tavilio",
+    "dir": "supabase/migrations",
+    "ordered": true
   }
 }
