@@ -12,7 +12,7 @@
       "destinations": [{ "project": "aveiro", "key": "SUPABASE_SERVICE_ROLE_KEY" }],
       "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
       "notes": "Replaces the legacy service_role JWT with a new sb_secret_ key. No Bearer-JWT use in aveiro (checked at 425385b); supabase-js accepts sb_secret_ keys.",
-      "hold": "the service key is also the fallback signing secret for visitor sessions, newsletter unlock links and Connect OAuth state; first merge aveiro#435 and run aveiro/auth-bridge, aveiro/newsletter-unlock and aveiro/connect-oauth-state. Rotating then signs out visitors whose sessions predate AUTH_BRIDGE_SECRET (sessions last 30 days)"
+      "hold": "the service key is also the fallback signing secret for visitor sessions, newsletter unlock links and Connect OAuth state; run aveiro/auth-bridge, aveiro/newsletter-unlock and aveiro/connect-oauth-state first (aveiro#435 is merged). Rotating then signs out visitors whose sessions predate AUTH_BRIDGE_SECRET (sessions last 30 days)"
     },
     "aveiro/cron": {
       "source": { "type": "generated" },
@@ -29,21 +29,19 @@
       "source": { "type": "generated" },
       "destinations": [{ "project": "aveiro", "key": "AUTH_BRIDGE_SECRET" }],
       "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "notes": "New variable; until now derived from the service key. Run after aveiro#435 merges so existing sessions keep working.",
-      "hold": "until aveiro#435 merges"
+      "notes": "New variable; until now derived from the service key. Run after aveiro#435 merges so existing sessions keep working."
     },
     "aveiro/connect-oauth-state": {
       "source": { "type": "generated" },
       "destinations": [{ "project": "aveiro", "key": "CONNECT_OAUTH_STATE_SECRET" }],
       "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "notes": "New variable; until now derived from the service key. Run after aveiro#435 merges.",
-      "hold": "until aveiro#435 merges"
+      "notes": "New variable; until now derived from the service key. Run after aveiro#435 merges."
     },
     "aveiro/newsletter-unlock": {
       "source": { "type": "generated" },
       "destinations": [{ "project": "aveiro", "key": "NEWSLETTER_UNLOCK_SECRET" }],
       "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "hold": "until aveiro#435 merges (verifiers then also accept the old service-key derivation until 2027-01-31, so sent links keep working)"
+      "notes": "Verifiers also accept the old service-key derivation until 2027-01-31 (aveiro#435), so sent links keep working until the service key rotates."
     },
     "aveiro/stripe-secret": {
       "source": { "type": "manual", "prefix": "sk_live_", "dashboard": "Stripe > Developers > API keys > Roll key (keep the old key valid 1 hour)" },
