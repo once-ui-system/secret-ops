@@ -14,7 +14,7 @@ export function loadTargets(path = new URL("../../targets.json", import.meta.url
 export function getTarget(targets, id) {
   const t = targets[id];
   if (!t) throw new Error(`unknown target "${id}". Known: ${Object.keys(targets).sort().join(", ")}`);
-  if (t.hold) throw new Error(`target "${id}" is on hold: ${t.hold}`);
+  if (t.hold) throw new Error(`target "${id}" is on hold; the reason is kept outside this public repo`);
   if (!t.destinations?.length) throw new Error(`target "${id}" has no destinations`);
   return t;
 }
