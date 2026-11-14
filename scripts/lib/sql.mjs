@@ -90,3 +90,48 @@ export function prepareMigration(sql) {
 export function lit(v) {
   return v == null ? "null" : `'${String(v).replace(/'/g, "''")}'`;
 }
+
+const SQLSTATE_NAMES = {
+  "42601": "syntax_error",
+  "42501": "insufficient_privilege",
+  "42P01": "undefined_table",
+  "42703": "undefined_column",
+  "42704": "undefined_object",
+  "42883": "undefined_function",
+  "3F000": "invalid_schema_name",
+  "42P06": "duplicate_schema",
+  "42P07": "duplicate_table",
+  "42701": "duplicate_column",
+  "42710": "duplicate_object",
+  "42723": "duplicate_function",
+  "42P16": "invalid_table_definition",
+  "42804": "datatype_mismatch",
+  "22P02": "invalid_text_representation",
+  "23502": "not_null_violation",
+  "23503": "foreign_key_violation",
+  "23505": "unique_violation",
+  "23514": "check_violation",
+  "2BP01": "dependent_objects_still_exist",
+  "25001": "active_sql_transaction",
+  "40P01": "deadlock_detected",
+  "55P03": "lock_not_available",
+  "57014": "query_canceled",
+};
+
+/**
+ * What a failed query may say in this public repo's logs: the HTTP status and
+ * the Postgres error code with its condition name. Postgres's own message
+ * names tables, columns and policies and can quote the SQL (its LINE n: echo),
+ * and the source repos are private, so the message itself is never printed.
+ * Read the full text by running the file in the SQL editor or a local copy.
+ */
+export function publicSqlError(message) {
+  const text = String(message ?? "");
+  const status = /->\s*(\d{3})\b/.exec(text)?.[1];
+  const code = /\b(?:ERROR|FATAL):\s+([0-9A-Z]{5}):/.exec(text)?.[1] ?? /\b(?:SQLSTATE|code)[\s:=]+"?([0-9A-Z]{5})\b/i.exec(text)?.[1];
+  const parts = [];
+  if (code) parts.push(`Postgres error ${code}${SQLSTATE_NAMES[code] ? ` (${SQLSTATE_NAMES[code]})` : ""}`);
+  else parts.push("Postgres error (no error code in the response)");
+  if (status) parts.push(`HTTP ${status}`);
+  return `${parts.join(", ")}; the message is not shown in this public log`;
+}

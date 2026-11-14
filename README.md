@@ -18,7 +18,7 @@ Where each target's new value comes from (`targets.json`):
 - **generated**: 32 random bytes, used for cron and bridge secrets.
 - **manual**: Stripe, Resend, Upstash and the other dashboard-only keys. You roll the key in the provider dashboard and paste it once into the `INCOMING_SECRET` environment secret. The run checks the prefix (for example `sk_live_`), so a key pasted for the wrong target is refused.
 
-Targets marked `hold` refuse to run. Each one says why, for example "stored data is encrypted with it".
+Targets marked `"hold": true` refuse to run. This repo is public, so why a target is held, and any other notes about a target, are kept outside it. `npm test` refuses a hold reason or a `notes` field here.
 
 ## Safeguards
 
@@ -61,13 +61,13 @@ Files that were already run by hand in the SQL editor: run with **baseline** tic
 
 What it refuses: a file already recorded with a different hash (add a new migration instead), transaction control in the middle of a file (a whole-file `BEGIN; ... COMMIT;` wrapper is fine and removed), and statements that can't run in a transaction (`CONCURRENTLY`, `VACUUM`). Those go through the SQL editor by hand.
 
-Logs and summaries show file names, hashes and Postgres error messages, never the SQL, since the source repos are private and this one is public. There is no backup step: the Management API has no dump. The rehearsal is the safety net, plus Supabase's own daily backups on paid projects.
+Logs and summaries show file names, hashes and the Postgres error code (for example `42P07 (duplicate_table)`), never the SQL or Postgres's own error message, since the source repos are private and this one is public. To read the full message, run the failing file in the SQL editor or against a local copy. There is no backup step: the Management API has no dump. The rehearsal is the safety net, plus Supabase's own daily backups on paid projects.
 
 Setup: the `rotation` environment needs one more secret, `SOURCE_REPOS_TOKEN`: a fine-grained GitHub token with read-only **Contents** access to the repos in `databases.json`. The existing `SUPABASE_ACCESS_TOKEN` runs the SQL.
 
 ## Adding a target
 
-Add an entry to `targets.json` with a source and destinations, plus smoke checks if the project has them. Names and ids only, never values. `npm test` checks the file and refuses anything that looks like a secret value.
+Add an entry to `targets.json` with a source and destinations, plus smoke checks if the project has them. Names and ids only, never values, and no notes on why or when to run it. `npm test` checks the file and refuses anything that looks like a secret value.
 
 ## Local
 

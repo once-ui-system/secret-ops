@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { splitStatements, prepareMigration } from "../scripts/lib/sql.mjs";
+import { splitStatements, prepareMigration, publicSqlError } from "../scripts/lib/sql.mjs";
 import { selectFiles, planId } from "../scripts/migrate.mjs";
 
 test("splits on top-level semicolons only", () => {
@@ -45,4 +45,19 @@ test("plan id changes when a file changes", () => {
   const a = planId("ref", [{ path: "1.sql", sha256: "aa" }]);
   assert.notEqual(a, planId("ref", [{ path: "1.sql", sha256: "ab" }]));
   assert.notEqual(a, planId("other", [{ path: "1.sql", sha256: "aa" }]));
+});
+
+test("publicSqlError keeps the code and drops Postgres's message and SQL echo", () => {
+  const raw =
+    'POST https://api.supabase.com/v1/projects/abc/database/query -> 400 Failed to run sql query: ERROR:  42P07: relation "secret_table" already exists\nLINE 3: create table secret_table (id int);';
+  const out = publicSqlError(raw);
+  assert.match(out, /42P07 \(duplicate_table\)/);
+  assert.match(out, /HTTP 400/);
+  assert.doesNotMatch(out, /secret_table|create table|LINE/);
+});
+
+test("publicSqlError without a code says so and still hides the text", () => {
+  const out = publicSqlError("POST https://api.supabase.com/x -> 500 something about policy owner_only");
+  assert.match(out, /no error code/);
+  assert.doesNotMatch(out, /owner_only/);
 });

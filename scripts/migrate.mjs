@@ -15,14 +15,15 @@
  * running them; like --apply, it acts only when given the plan id that a
  * first, listing-only baseline run prints.
  *
- * The ledger lives in the project itself: secret_ops.migrations. Logs and the
- * job summary show file names, hashes and Postgres error text, never SQL.
+ * The ledger lives in the project itself: secret_ops.migrations. This repo is
+ * public, so logs and the job summary show file names, hashes and Postgres
+ * error codes, never SQL or Postgres's own error messages (publicSqlError).
  */
 import { appendFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
 import { createHash, randomBytes } from "node:crypto";
 import { join } from "node:path";
 import { supabaseClient } from "./lib/supabase.mjs";
-import { lit, prepareMigration } from "./lib/sql.mjs";
+import { lit, prepareMigration, publicSqlError } from "./lib/sql.mjs";
 
 const LEDGER = `
 create schema if not exists secret_ops;
@@ -105,7 +106,11 @@ async function main() {
   if (!existsSync(dir)) throw new Error(`${db.repo} has no ${db.dir}`);
 
   const sb = supabaseClient({ token: process.env.SUPABASE_ACCESS_TOKEN });
-  const run = (sql) => sb.query(db.ref, sql);
+  // Every query error is reduced to its code before anything can print it.
+  const run = (sql) =>
+    sb.query(db.ref, sql).catch((err) => {
+      throw new Error(publicSqlError(err.message));
+    });
   const commit = process.env.SOURCE_COMMIT || null;
   const runUrl = process.env.RUN_URL || null;
   const lines = [`## ${baseline ? "Baseline" : applyPlan ? "Apply" : "Rehearsal"}: ${dbId} (${db.ref})`, "", `Source: ${db.repo}@${(commit || "?").slice(0, 7)}`, ""];
@@ -186,7 +191,7 @@ async function main() {
         break;
       }
     }
-    sumLine(lines, `- Rehearsal FAILED at ${culprit}: ${err.message.replace(/^POST \S+ -> /, "")}`);
+    sumLine(lines, `- Rehearsal FAILED at ${culprit}: ${err.message}`);
     sumLine(lines, "- Nothing was changed.");
     finish(lines);
     process.exit(1);

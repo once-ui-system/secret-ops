@@ -1,17 +1,15 @@
 {
-  "$comment": "Every rotatable secret. Ids and variable names only, never values. source.type: supabase (new sb_secret_ key by API), generated (random), manual (rolled in a dashboard, pasted into the INCOMING_SECRET repo secret). A destination with shared: true is a team shared variable and needs projectId.",
+  "$comment": "Every rotatable secret. Ids and variable names only, never values. source.type: supabase (new sb_secret_ key by API), generated (random), manual (rolled in a dashboard, pasted into the INCOMING_SECRET repo secret). A destination with shared: true is a team shared variable and needs projectId. hold: true refuses to run; why a target is held, and other notes, stay out of this public file.",
   "targets": {
     "magic-portfolio/page-access": {
       "source": { "type": "generated" },
       "destinations": [{ "project": "magic-portfolio-demo", "key": "PAGE_ACCESS_SECRET" }],
-      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "notes": "New variable for magic-portfolio#206 (signed access cookie). Without it the cookie key is derived from PAGE_ACCESS_PASSWORD, so this is not urgent; setting it asks visitors with an old cookie for the password once."
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
     },
     "aveiro/supabase-secret": {
       "source": { "type": "supabase", "ref": "mritcuhqiyieibsbspwt" },
       "destinations": [{ "project": "aveiro", "key": "SUPABASE_SERVICE_ROLE_KEY" }],
-      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "notes": "Replaces the legacy service_role JWT with a new sb_secret_ key. No Bearer-JWT use in aveiro (checked at 425385b); supabase-js accepts sb_secret_ keys. Rotating signs out visitors whose sessions predate AUTH_BRIDGE_SECRET (sessions last 30 days) and ends newsletter unlock links signed with the old service-key derivation."
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
     },
     "aveiro/cron": {
       "source": { "type": "generated" },
@@ -21,26 +19,22 @@
     "aveiro/unsubscribe": {
       "source": { "type": "generated" },
       "destinations": [{ "project": "aveiro", "key": "UNSUBSCRIBE_SECRET" }],
-      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "notes": "New variable. Run it right before aveiro#434 merges: the current code verifies with UNSUBSCRIBE_SECRET alone, so links signed with the old default fail until #434 (which also accepts the default until 2027-01-31) is deployed. Future rotations need UNSUBSCRIBE_SECRET_PREVIOUS set to the old value."
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
     },
     "aveiro/auth-bridge": {
       "source": { "type": "generated" },
       "destinations": [{ "project": "aveiro", "key": "AUTH_BRIDGE_SECRET" }],
-      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "notes": "New variable; until now derived from the service key. Run after aveiro#435 merges so existing sessions keep working."
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
     },
     "aveiro/connect-oauth-state": {
       "source": { "type": "generated" },
       "destinations": [{ "project": "aveiro", "key": "CONNECT_OAUTH_STATE_SECRET" }],
-      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "notes": "New variable; until now derived from the service key. Run after aveiro#435 merges."
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
     },
     "aveiro/newsletter-unlock": {
       "source": { "type": "generated" },
       "destinations": [{ "project": "aveiro", "key": "NEWSLETTER_UNLOCK_SECRET" }],
-      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "notes": "Verifiers also accept the old service-key derivation until 2027-01-31 (aveiro#435), so sent links keep working until the service key rotates."
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
     },
     "aveiro/stripe-secret": {
       "source": { "type": "manual", "prefix": "sk_live_", "dashboard": "Stripe > Developers > API keys > Roll key (keep the old key valid 1 hour)" },
@@ -88,8 +82,7 @@
         { "project": "aveiro", "key": "FRAMETIC_SERVICE_KEY" },
         { "project": "chirio", "key": "FRAMETIC_SERVICE_KEY" }
       ],
-      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "notes": "Same Frametic key name in aveiro and chirio. If they are two different keys, split this target."
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
     },
     "aveiro/frametic-embed": {
       "source": { "type": "manual", "dashboard": "Frametic admin > embed usage key" },
@@ -100,23 +93,22 @@
       "source": { "type": "generated" },
       "destinations": [{ "project": "aveiro", "key": "FRAMETIC_WEBHOOK_SECRET" }],
       "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "hold": "the sending side (Frametic) must get the same value; find where Frametic stores it first"
+      "hold": true
     },
     "aveiro/media-url-signing": {
       "source": { "type": "generated" },
       "destinations": [{ "project": "aveiro", "key": "MEDIA_URL_SIGNING_SECRET" }],
-      "hold": "breaks signed media links already sent (security audit, 2026-10-24)"
+      "hold": true
     },
     "aveiro/email-provider-enc": {
       "source": { "type": "generated" },
       "destinations": [{ "project": "aveiro", "key": "EMAIL_PROVIDER_ENC_KEY" }],
-      "hold": "stored data is encrypted with it; needs a re-encrypt script first"
+      "hold": true
     },
     "chirio/cron": {
       "source": { "type": "generated" },
       "destinations": [{ "project": "chirio", "key": "CRON_SECRET" }],
-      "smoke": [{ "path": "/", "expect": [200, 307, 308] }],
-      "notes": "Replaces the existing CRON_SECRET with a fresh sensitive value before chirio#70 ships: from then on an unset or blank value makes the crons answer 503. Vercel cron calls pick the new value up on the next deploy."
+      "smoke": [{ "path": "/", "expect": [200, 307, 308] }]
     }
   }
 }

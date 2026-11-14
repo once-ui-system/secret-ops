@@ -5,12 +5,16 @@ import { loadTargets } from "./lib/targets.mjs";
 
 const SOURCES = new Set(["supabase", "generated", "manual"]);
 const VALUE_LIKE = /((sk|rk)_(live|test)_|whsec_|sb_secret_|re_)[A-Za-z0-9]{12,}|eyJhbGci/;
+const KEYS = new Set(["source", "destinations", "smoke", "hold"]);
 const errors = [];
 const targets = loadTargets();
 for (const [id, t] of Object.entries(targets)) {
   if (!/^[a-z0-9-]+\/[a-z0-9-]+$/.test(id)) errors.push(`${id}: id must be <app>/<secret>`);
   if (!SOURCES.has(t.source?.type)) errors.push(`${id}: unknown source.type`);
   if (t.source?.type === "supabase" && !/^[a-z]{20}$/.test(t.source.ref || "")) errors.push(`${id}: bad Supabase ref`);
+  // The repo is public: why a target is held, and other notes, stay out of it.
+  if ("hold" in t && t.hold !== true) errors.push(`${id}: hold must be true; keep the reason outside this public repo`);
+  for (const k of Object.keys(t)) if (!KEYS.has(k)) errors.push(`${id}: unexpected field "${k}" (notes stay outside this public repo)`);
   for (const d of t.destinations || []) {
     if (!d.project || !/^[A-Z][A-Z0-9_]*$/.test(d.key || "")) errors.push(`${id}: destination needs project and an UPPER_CASE key`);
     if (d.key?.startsWith("NEXT_PUBLIC_")) errors.push(`${id}: ${d.key} is public, not a secret`);
