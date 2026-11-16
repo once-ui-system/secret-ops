@@ -13,7 +13,7 @@
   },
   "frametic": {
     "ref": "lffdejkeztbwlgsfpgbo",
-    "repo": "once-ui-system/frametic",
+    "repo": "once-ui-system/motion",
     "dir": "supabase/migrations",
     "ordered": true
   },
